@@ -1,0 +1,35 @@
+services:
+  pymes-security-back:
+    build:
+      context: ./pymes_security_back
+    image: pymes-security-back:latest
+    container_name: pymes-security-back
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pymes-security-db:5432/${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:3001:8000"
+    depends_on:
+      - pymes-security-db
+
+  pymes-security-front:
+    build:
+      context: ./pymes_security_front
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    image: pymes-security-front:latest
+    container_name: pymes-security-front
+    ports:
+      - "127.0.0.1:3000:80"
+    environment:
+      NODE_ENV: production
+
+  pymes-security-db:
+    image: postgres:17.6-alpine3.22
+    container_name: pymes-security-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
