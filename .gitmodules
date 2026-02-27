@@ -1,0 +1,6 @@
+[submodule "pymes_security_back"]
+	path = pymes_security_back
+	url = git@github.com:Bloskix/pymes_security_back.git
+[submodule "pymes_security_front"]
+	path = pymes_security_front
+	url = git@github.com:Bloskix/pymes_security_front.git
