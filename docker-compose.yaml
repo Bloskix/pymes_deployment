@@ -34,8 +34,17 @@ services:
     volumes:
       - ./postgres:/var/lib/postgresql/data
 
+  agent001:
+    build:
+      context: ./agent
+    image: agent:latest
+    container_name: agent001
+    depends_on:
+      - wazuh.manager
+
   wazuh.manager:
     image: wazuh/wazuh-manager:4.14.3
+    container_name: wazuh-manager
     hostname: wazuh.manager
     ulimits:
       memlock:
@@ -78,6 +87,7 @@ services:
 
   wazuh.indexer:
     image: wazuh/wazuh-indexer:4.14.3
+    container_name: wazuh-indexer
     hostname: wazuh.indexer
     ports:
       - "9200:9200"
@@ -102,6 +112,7 @@ services:
 
   wazuh.dashboard:
     image: wazuh/wazuh-dashboard:4.14.3
+    container_name: wazuh-dashboard
     hostname: wazuh.dashboard
     ports:
       - 443:5601
