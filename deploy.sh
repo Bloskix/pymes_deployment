@@ -4,8 +4,8 @@ git submodule update --recursive --remote
 
 docker compose build
 
-docker compose up -d
+docker compose up
+# docker compose up -d
 
-
-docker builder prune --all --force
-docker image prune --all --force
+# docker builder prune --all --force
+# docker image prune --all --force
