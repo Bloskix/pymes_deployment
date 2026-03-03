@@ -1,29 +1,36 @@
 FROM ubuntu:22.04
 
-# Avoid prompts from apt
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install OpenSSH server, sudo, and basic utilities
+# Install systemd, SSH, and minimal utilities
 RUN apt-get update && \
-    apt-get install -y openssh-server iputils-ping sudo vim curl && \
+    apt-get install -y --no-install-recommends \
+        systemd systemd-sysv \
+        openssh-server sudo curl ca-certificates lsb-release iproute2 iptables jq software-properties-common && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Create directory required by SSHD
-RUN mkdir /var/run/sshd
+# Remove unnecessary systemd units that fail inside Docker
+RUN cd /lib/systemd/system/sysinit.target.wants/ && \
+    ls | grep -v systemd-tmpfiles-setup | xargs rm -f && \
+    rm -f /lib/systemd/system/multi-user.target.wants/* && \
+    rm -f /etc/systemd/system/*.wants/* && \
+    rm -f /lib/systemd/system/local-fs.target.wants/* && \
+    rm -f /lib/systemd/system/sockets.target.wants/*udev* && \
+    rm -f /lib/systemd/system/sockets.target.wants/*initctl* && \
+    rm -f /lib/systemd/system/basic.target.wants/* && \
+    rm -f /lib/systemd/system/anaconda.target.wants/*
 
-# Set root password to "root"
-RUN echo 'root:root' | chpasswd
+# Configure SSHD
+RUN mkdir -p /var/run/sshd && \
+    echo 'root:root' | chpasswd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
-# Allow root login via SSH and enable password authentication
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+# Enable SSH so systemd starts it automatically
+RUN systemctl enable ssh
 
-# Fix for SSH login issue where user is kicked off after login
-RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+STOPSIGNAL SIGRTMIN+3
 
-# Expose standard SSH port
-EXPOSE 22
-
-# Start SSH daemon in the foreground
-CMD ["/usr/sbin/sshd", "-D"]
+CMD ["/lib/systemd/systemd"]

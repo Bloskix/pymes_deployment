@@ -27,6 +27,8 @@ services:
   pymes-security-db:
     image: postgres:17.6-alpine3.22
     container_name: pymes-security-db
+    ports:
+      - "127.0.0.1:5434:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -39,6 +41,28 @@ services:
       context: ./agent
     image: agent:latest
     container_name: agent001
+    privileged: true
+    cgroup: host
+    tmpfs:
+      - /run
+      - /run/lock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    depends_on:
+      - wazuh.manager
+
+  agent002:
+    build:
+      context: ./agent
+    image: agent:latest
+    container_name: agent002
+    privileged: true
+    cgroup: host
+    tmpfs:
+      - /run
+      - /run/lock
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
     depends_on:
       - wazuh.manager
 
